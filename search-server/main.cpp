@@ -84,11 +84,9 @@ public:
     template <typename StringContainer>
     explicit SearchServer(const StringContainer& stop_words)
         : stop_words_(MakeUniqueNonEmptyStrings(stop_words)) {
-        for(const auto& word : stop_words_){
-            if(!IsValidWord(word)){
+        if(!all_of(stop_words.begin(), stop_words.end(), IsValidWord)){
                 throw invalid_argument("StopWords Invalid argument");
             }
-        }
     }
 
     explicit SearchServer(const string& stop_words_text)
@@ -107,9 +105,6 @@ public:
         const vector<string> words = SplitIntoWordsNoStop(document);
         const double inv_word_count = 1.0 / words.size();
         for (const string& word : words) {
-            if(!IsValidWord(word)){
-                throw invalid_argument("AddDocument Invalid argument");
-            }
             word_to_document_freqs_[word][document_id] += inv_word_count;
         }
 
@@ -199,6 +194,9 @@ private:
     vector<string> SplitIntoWordsNoStop(const string& text) const {
         vector<string> words;
         for (const string& word : SplitIntoWords(text)) {
+            if(!IsValidWord(word)){
+                throw invalid_argument("AddDocument Invalid argument");
+            }
             if (!IsStopWord(word)) {
                 words.push_back(word);
             }
@@ -232,6 +230,9 @@ private:
             is_minus = true;
             text = text.substr(1);
         }
+        if(!IsValidWord(text) || text[0] == '-' || (text.empty())){
+            throw invalid_argument("ParseQueryWord Invalid argument");
+        }
         return {text, is_minus, IsStopWord(text)};
     }
 
@@ -243,10 +244,6 @@ private:
     Query ParseQuery(const string& text) const {
         Query query;
         for (const string& word : SplitIntoWords(text)) {
-            if(!IsValidWord(word) || (word[0] == '-' && word[1] == '-')
-                || (word[0] == '-' && (word.size() == 1)) || (word.empty())){
-                throw invalid_argument("ParseQuery Invalid argument");
-            }
             const QueryWord query_word = ParseQueryWord(word);
             if (!query_word.is_stop) {
                 if (query_word.is_minus) {
