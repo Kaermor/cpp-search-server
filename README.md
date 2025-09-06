@@ -1,5 +1,5 @@
-# cpp-search-server
-Final project: search server
+# Search server
+Project: search server
 
 A demo project of a search server that searches through document texts with the ability to specify stop words (ignored by the server), minus words (documents with them are not taken into account in the results).
 
